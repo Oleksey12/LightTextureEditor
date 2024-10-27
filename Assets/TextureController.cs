@@ -15,7 +15,7 @@
         {
             if (texture2D.width == targetX && texture2D.height == targetY)
             {
-                return texture2D;
+                return null;
             }
             
             // ВАЖНО! Мы передаем в Renderer чистую текстуру без всяких фильтраций
@@ -42,8 +42,8 @@
 
         public virtual Texture2D ResizeTo2Power(Texture2D texture2D, int width, int height)
         {
-            _powWidth = (int)Math.Log(2, width);
-            _powHeight = (int)Math.Log(2, width);
+            _powWidth = (int)Math.Log(width, 2);
+            _powHeight = (int)Math.Log(height, 2);
 
             return Resize(texture2D, (int)Math.Pow(2, _powWidth), (int)Math.Pow(2, _powHeight));
         }

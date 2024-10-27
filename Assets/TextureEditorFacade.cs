@@ -25,7 +25,10 @@
         public void EditTexture(Texture2D inputTexture, string path, int width, int height)
         {
             _resultTexture = _textureController.Resize(inputTexture, width, height);
-            _saveController.SaveTexture(_resultTexture, path);
+            if (_resultTexture)
+            {
+                _saveController.SaveTexture(_resultTexture, path);
+            }
         }
 
         public void EditTexture(Texture2D inputTexture, string path, Modes mode)
@@ -39,7 +42,10 @@
                 _resultTexture = _textureController.ResizeTo2Power(inputTexture, inputTexture.width, inputTexture.height);
             }
 
-            _saveController.SaveTexture(_resultTexture, path);
+            if (_resultTexture)
+            {
+                _saveController.SaveTexture(_resultTexture, path);
+            }
         }
     }
 }
