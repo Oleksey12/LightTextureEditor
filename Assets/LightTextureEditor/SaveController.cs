@@ -9,12 +9,15 @@
     /// </summary>
     public class SaveController
     {
-        protected byte[] _imageData = default;
+        protected byte[] imageData = default;
 
-        public void SaveTexture(Texture2D texture2D, string path)
+        /// <summary>
+        /// Сохраняет новую, масштабированную текстуру
+        /// </summary>
+        public virtual void SaveTexture(Texture2D texture2D, string path)
         {
-            _imageData = texture2D.EncodeToPNG();
-            File.WriteAllBytes(path, _imageData);
+            imageData = texture2D.EncodeToPNG();
+            File.WriteAllBytes(path, imageData);
             AssetDatabase.Refresh();
         }
     }
