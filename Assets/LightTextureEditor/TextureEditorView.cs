@@ -1,4 +1,4 @@
-namespace LightTextureEditor
+п»їnamespace LightTextureEditor
 {
     using System.Collections.Generic;
     using UnityEditor.AssetImporters;
@@ -9,15 +9,15 @@ namespace LightTextureEditor
     using System;
 
     /// <summary>
-    /// Добавляет в стандартный UI импортера текстур вью для редактирования размера текстур
+    /// Р”РѕР±Р°РІР»СЏРµС‚ РІ СЃС‚Р°РЅРґР°СЂС‚РЅС‹Р№ UI РёРјРїРѕСЂС‚РµСЂР° С‚РµРєСЃС‚СѓСЂ РІСЊСЋ РґР»СЏ СЂРµРґР°РєС‚РёСЂРѕРІР°РЅРёСЏ СЂР°Р·РјРµСЂР° С‚РµРєСЃС‚СѓСЂ
     /// </summary>
     [CustomEditor(typeof(TextureImporter))]
     [CanEditMultipleObjects]
     public sealed class TextureEditorView : Editor
     {
         // TODO
-        // Подумать есть ли смысл от Lazy типа и узнать
-        // приведет ли это к большому количеству созданных экземпляров
+        // РџРѕРґСѓРјР°С‚СЊ РµСЃС‚СЊ Р»Рё СЃРјС‹СЃР» РѕС‚ Lazy С‚РёРїР° Рё СѓР·РЅР°С‚СЊ
+        // РїСЂРёРІРµРґРµС‚ Р»Рё СЌС‚Рѕ Рє Р±РѕР»СЊС€РѕРјСѓ РєРѕР»РёС‡РµСЃС‚РІСѓ СЃРѕР·РґР°РЅРЅС‹С… СЌРєР·РµРјРїР»СЏСЂРѕРІ
         private static readonly Type _textureImporterInspectorType = Type.GetType("UnityEditor.TextureImporterInspector, UnityEditor");
         private static readonly MethodInfo _setAssetImporterTargetEditorMethod = _textureImporterInspectorType.GetMethod("InternalSetAssetImporterTargetEditor", BindingFlags.Instance | BindingFlags.NonPublic);
         private static readonly FieldInfo _onEnableCalledField = typeof(AssetImporterEditor).GetField("m_OnEnableCalled", BindingFlags.Instance | BindingFlags.NonPublic);
@@ -31,22 +31,27 @@ namespace LightTextureEditor
 
         private string[] _modeNames = 
         {
-            "Кратный четырем (для сжатия)",
-            "Степень двойки",
-            "Кастомный размер"
+            "РљСЂР°С‚РЅС‹Р№ С‡РµС‚С‹СЂРµРј (РґР»СЏ СЃР¶Р°С‚РёСЏ)",
+            "РЎС‚РµРїРµРЅСЊ РґРІРѕР№РєРё",
+            "РљР°СЃС‚РѕРјРЅС‹Р№ СЂР°Р·РјРµСЂ"
         };
 
+        private GUIStyle _redStyle = new GUIStyle();
+
         private string _imageName = "";
+        private bool _isTextureSmall = false;
         private int _mode = 0;
         private int _width = 0;
         private int _height = 0;
 
-        private const string NAME = "LightTextureEditor";
-        private const string MODE = "Режим масштабирования";
-        private const string WIDTH = "Новая ширина";
-        private const string HEIGHT = "Новая высота";
-        private const string IMAGE_NAME = "Название изображения";
-        private const string EDIT_BUTTON = "Масштабировать";
+        private const string NAME_LABEL = "LightTextureEditor";
+        private const string MODE_LABEL = "Р РµР¶РёРј РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРёСЏ";
+        private const string WIDTH_LABEL = "РќРѕРІР°СЏ С€РёСЂРёРЅР°";
+        private const string HEIGHT_LABEL = "РќРѕРІР°СЏ РІС‹СЃРѕС‚Р°";
+        private const string IMAGE_NAME_LABEL = "РќР°Р·РІР°РЅРёРµ РёР·РѕР±СЂР°Р¶РµРЅРёСЏ";
+        private const string EDIT_BUTTON_TEXT = "РњР°СЃС€С‚Р°Р±РёСЂРѕРІР°С‚СЊ";
+
+        private const string SMALL_SIZE_ALERT = "РќРµРІРѕР·РјРѕР¶РЅРѕ РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°С‚СЊ С‚РµРєСЃС‚СѓСЂСѓ, РґР»РёРЅР° РёР»Рё С€РёСЂРёРЅР° РјРµРЅСЊС€Рµ РјРёРЅРёРјР°Р»СЊРЅРѕРіРѕ Р·РЅР°С‡РµРЅРёСЏ";
 
         private void OnEnable()
         {
@@ -60,17 +65,19 @@ namespace LightTextureEditor
             _defaultEditor = (AssetImporterEditor)CreateEditor(targets, _textureImporterInspectorType);
             _setAssetImporterTargetEditorMethod.Invoke(_defaultEditor, new object[] { this });
             _targets = targets.Cast<TextureImporter>().ToList();
+
+            InitializeStyles();
         }
 
         /// <summary>
-        /// Рисует расширенный интерфейс импортера текстур
+        /// Р РёСЃСѓРµС‚ СЂР°СЃС€РёСЂРµРЅРЅС‹Р№ РёРЅС‚РµСЂС„РµР№СЃ РёРјРїРѕСЂС‚РµСЂР° С‚РµРєСЃС‚СѓСЂ
         /// </summary>
         public override void OnInspectorGUI()
         {
             _defaultEditor.OnInspectorGUI();
 
             // TODO
-            // Добавить масштабирование для нескольких картинок
+            // Р”РѕР±Р°РІРёС‚СЊ РјР°СЃС€С‚Р°Р±РёСЂРѕРІР°РЅРёРµ РґР»СЏ РЅРµСЃРєРѕР»СЊРєРёС… С‚РµРєСЃС‚СѓСЂ
             if (_targets.Count != 1)
             {
                 return;
@@ -79,7 +86,7 @@ namespace LightTextureEditor
             _targetImporter = (TextureImporter)target;
             _texture = AssetDatabase.LoadAssetAtPath<Texture2D>(_targetImporter.assetPath);
 
-            // Инициализация стандартных значения для input полей
+            // РРЅРёС†РёР°Р»РёР·Р°С†РёСЏ СЃС‚Р°РЅРґР°СЂС‚РЅС‹С… Р·РЅР°С‡РµРЅРёСЏ РґР»СЏ input РїРѕР»РµР№
             if (_width == 0 && _height == 0)
             {
                 _width = _texture.width;
@@ -87,20 +94,37 @@ namespace LightTextureEditor
                 _imageName = _targetImporter.assetPath;
             }
 
+            DrawGUI();
+        }
+
+        private void InitializeStyles()
+            => _redStyle.normal.textColor = new Color(0.9f, 0.15f, 0.15f);
+
+        private void DrawGUI()
+        {
             EditorGUILayout.Space(20f);
-            EditorGUILayout.LabelField(NAME, EditorStyles.boldLabel);
+            EditorGUILayout.LabelField(NAME_LABEL, EditorStyles.boldLabel);
             EditorGUILayout.Space(10f);
 
-            EditorGUILayout.LabelField(IMAGE_NAME, EditorStyles.whiteLabel);
+            EditorGUILayout.LabelField(IMAGE_NAME_LABEL, EditorStyles.whiteLabel);
             _imageName = EditorGUILayout.TextField(_imageName, GUILayout.MaxWidth(300f));
             EditorGUILayout.Space(5f);
 
-            EditorGUILayout.LabelField(MODE, EditorStyles.whiteLabel);
+            EditorGUILayout.LabelField(MODE_LABEL, EditorStyles.whiteLabel);
             _mode = EditorGUILayout.Popup(_mode, _modeNames, GUILayout.MaxWidth(300f));
             SelectModeLogic(_mode);
 
             EditorGUILayout.Space(10f);
-            if (GUILayout.Button(EDIT_BUTTON, GUILayout.MaxWidth(175f)))
+
+            _isTextureSmall = _texture.width < 4 || _texture.height < 4;
+            if (_isTextureSmall && _mode == 0)
+            {
+                EditorGUILayout.LabelField(SMALL_SIZE_ALERT, _redStyle);
+                EditorGUILayout.Space(5f);
+            }
+
+            GUI.enabled = !(_isTextureSmall && _mode == 0);
+            if (GUILayout.Button(EDIT_BUTTON_TEXT, GUILayout.MaxWidth(175f)))
             {
                 _editTextureFunction();
             }
@@ -121,12 +145,12 @@ namespace LightTextureEditor
                 _editTextureFunction = delegate { _textureFacade.EditTexture(_texture, _imageName, _width, _height); };
                 EditorGUILayout.Space(5f);
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(WIDTH, EditorStyles.whiteLabel, GUILayout.Width(150f), GUILayout.ExpandWidth(true));
+                EditorGUILayout.LabelField(WIDTH_LABEL, EditorStyles.whiteLabel, GUILayout.Width(150f), GUILayout.ExpandWidth(true));
                 _width = EditorGUILayout.IntField(_width, GUILayout.Width(240f), GUILayout.ExpandWidth(true));
                 EditorGUILayout.EndHorizontal();
 
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.LabelField(HEIGHT, EditorStyles.whiteLabel, GUILayout.Width(150f), GUILayout.ExpandWidth(true));
+                EditorGUILayout.LabelField(HEIGHT_LABEL, EditorStyles.whiteLabel, GUILayout.Width(150f), GUILayout.ExpandWidth(true));
                 _height = EditorGUILayout.IntField(_height, GUILayout.Width(240f), GUILayout.ExpandWidth(true));
                 EditorGUILayout.EndHorizontal();
             }
