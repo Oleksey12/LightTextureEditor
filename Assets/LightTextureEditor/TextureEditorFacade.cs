@@ -3,44 +3,57 @@
     using UnityEngine;
 
     /// <summary>
-    /// Простой интерфейс для разных способов редактирования текстуры
+    /// Фасад для вызова обработки разных способов масштабирования текстур
     /// </summary>
     public class TextureEditorFacade
     {
-        private readonly SaveController _saveController = default;
-        private readonly TextureController _textureController = default;
+        protected readonly SaveController saveController = default;
+        protected readonly TextureController textureController = default;
 
-        private Texture2D _resultTexture = default;
+        protected Texture2D resultTexture = default;
 
+        /// <summary>
+        /// Конструктор фасада
+        /// </summary>
         public TextureEditorFacade()
         {
-            _saveController = new SaveController();
-            _textureController = new TextureController();
+            saveController = new SaveController();
+            textureController = new TextureController();
         }
 
-        public void EditTexture(Texture2D inputTexture, string path, int width, int height)
+        /// <summary>
+        /// Масштабирует длину и ширину до новых значений
+        /// </summary>
+        public virtual void EditTexture(Texture2D inputTexture, string path, int width, int height)
         {
-            _resultTexture = _textureController.Resize(inputTexture, width, height);
-            if (_resultTexture)
+            resultTexture = textureController.Resize(inputTexture, width, height);
+            if (resultTexture)
             {
-                _saveController.SaveTexture(_resultTexture, path);
-            }
-        }
-        public void EditTextureToPowerOf2(Texture2D inputTexture, string path)
-        {
-            _resultTexture = _textureController.ResizeTo2Power(inputTexture, inputTexture.width, inputTexture.height);
-            if (_resultTexture)
-            {
-                _saveController.SaveTexture(_resultTexture, path);
+                saveController.SaveTexture(resultTexture, path);
             }
         }
 
-        public void EditeTextureToDivisorOf4(Texture2D inputTexture, string path)
+        /// <summary>
+        /// Масштабирует длину и ширину текстуры до значений, являющимися степенью двойки
+        /// </summary>
+        public virtual void EditTextureToPowerOf2(Texture2D inputTexture, string path)
         {
-            _resultTexture = _textureController.ResizeTo4Devisor(inputTexture, inputTexture.width, inputTexture.height);
-            if (_resultTexture)
+            resultTexture = textureController.ResizeTo2Power(inputTexture, inputTexture.width, inputTexture.height);
+            if (resultTexture)
             {
-                _saveController.SaveTexture(_resultTexture, path);
+                saveController.SaveTexture(resultTexture, path);
+            }
+        }
+
+        /// <summary>
+        /// Масштабирует длину и ширину текстуры до значений, кратным четырём
+        /// </summary>
+        public virtual void EditeTextureToDivisorOf4(Texture2D inputTexture, string path)
+        {
+            resultTexture = textureController.ResizeTo4Devisor(inputTexture, inputTexture.width, inputTexture.height);
+            if (resultTexture)
+            {
+                saveController.SaveTexture(resultTexture, path);
             }
         }
     }
